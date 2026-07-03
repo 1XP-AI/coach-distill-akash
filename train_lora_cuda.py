@@ -170,7 +170,10 @@ def main():
     if hub_repo and hf_token:
         from huggingface_hub import HfApi
         api = HfApi(token=hf_token)
-        api.create_repo(hub_repo, private=True, exist_ok=True)
+        print("HF token account:", api.whoami().get("name"))
+        # public so the adapter can be validated/pulled hands-off (matches the
+        # public dataset). Flip to private=True if the adapter must stay private.
+        api.create_repo(hub_repo, repo_type="model", private=False, exist_ok=True)
         api.upload_folder(folder_path=str(OUTPUT_DIR), repo_id=hub_repo)
         print(f"adapter pushed → https://huggingface.co/{hub_repo}")
     else:

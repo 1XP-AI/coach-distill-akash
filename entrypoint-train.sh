@@ -33,8 +33,18 @@ echo "── render Qwen training pairs ──"
 python3 prepare-training.py    # reads out/{teacher-data.jsonl,tools.json} → out/train
 
 echo "── LoRA train (adapter → $HUB_REPO) ──"
+# Train+push must NOT crash-loop the container on a push failure — a ~1h train
+# is precious. On failure keep the container alive (adapter is at /output/adapters,
+# recoverable via shell).
+set +e
 DATA_DIR="$REPO_ROOT/out/train" OUTPUT_DIR=/output/adapters \
   python3 train_lora_cuda.py
+TR=$?
+set -e
+if [ "$TR" != "0" ]; then
+  echo "── TRAIN/PUSH FAILED (rc=$TR): trained adapter (if any) at /output/adapters."
+  echo "   Fix HF perms/HUB_REPO, then re-push via shell — no re-train needed."
+fi
 
-echo "── TRAIN_DONE — sleeping so logs stay inspectable; close the lease to stop billing ──"
+echo "── TRAIN_DONE (rc=$TR) — sleeping so logs stay inspectable; close the lease to stop billing ──"
 sleep infinity
