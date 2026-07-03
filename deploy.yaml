@@ -15,8 +15,8 @@ services:
       - BATCH_SIZE=8 # A100 80GB has headroom
       - MAX_SEQ_LEN=3328
       - LORA_RANK=16
-      - DATA_REPO=1xp/coach-distill-data # Phase-A output (HF dataset)
-      - HUB_REPO=1xp/coach-qwen35-0.8b-lora # adapter destination (auto-created)
+      - DATA_REPO=jjangg96/coach-distill-data # Phase-A output (HF dataset)
+      - HUB_REPO=jjangg96/coach-qwen35-0.8b-lora # adapter destination (auto-created)
       # add this secret in the Console before deploy:
       # - HF_TOKEN=hf_xxx   (write; pulls dataset + pushes adapter)
     command:

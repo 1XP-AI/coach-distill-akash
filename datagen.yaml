@@ -13,7 +13,7 @@ services:
     env:
       - REPO_ROOT=/app/repo
       - TEACHER_MODEL=google/gemma-4-26B-A4B-it
-      - DATA_REPO=1xp/coach-distill-data # private HF dataset repo (auto-created)
+      - DATA_REPO=jjangg96/coach-distill-data # private HF dataset repo (auto-created)
       # add this secret in the Console before deploy:
       # - HF_TOKEN=hf_xxx   (write; uploads the dataset)
     command:

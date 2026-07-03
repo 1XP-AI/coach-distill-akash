@@ -9,10 +9,10 @@ GitHub 토큰 없이 clone합니다. (비밀정보 없음 — 토큰/키는 Cons
 
 - **Phase A — `datagen.yaml`**: 스톡 vLLM 이미지 → Gemma 4 26B-A4B 교사 서빙
   (`--tool-call-parser gemma4`, thinking off) → `datagen.bundle.mjs`(standalone Node)로
-  8언어 교사 데이터 생성 → private HF dataset repo(`1xp/coach-distill-data`)에 업로드.
+  8언어 교사 데이터 생성 → private HF dataset repo(`jjangg96/coach-distill-data`)에 업로드.
 - **Phase B — `deploy.yaml`**: 스톡 pytorch 이미지 → HF에서 데이터 pull →
   `prepare-training.py`(Qwen 챗템플릿 렌더) → `train_lora_cuda.py`(LoRA) → 어댑터를
-  `1xp/coach-qwen35-0.8b-lora`로 push.
+  `jjangg96/coach-qwen35-0.8b-lora`로 push.
 
 ## 필요한 것
 
