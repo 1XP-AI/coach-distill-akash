@@ -1,0 +1,54 @@
+---
+version: "2.0"
+
+services:
+  datagen:
+    image: vllm/vllm-openai:latest
+    env:
+      - REPO_ROOT=/app/repo
+      - TEACHER_MODEL=google/gemma-4-26B-A4B-it
+      - DATA_REPO=1xp/coach-distill-data
+      # add HF_TOKEN below (write token) before deploy:
+      # - HF_TOKEN=hf_xxx
+    command:
+      - bash
+      - -lc
+    args:
+      - >-
+        apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates &&
+        git clone --depth 1 https://github.com/1XP-AI/coach-distill-akash.git "$REPO_ROOT" &&
+        exec bash "$REPO_ROOT/entrypoint-datagen.sh"
+    expose:
+      - port: 8000
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    datagen:
+      resources:
+        cpu:
+          units: 8
+        memory:
+          size: 48Gi
+        storage:
+          size: 120Gi
+        gpu:
+          units: 1
+          attributes:
+            vendor:
+              nvidia:
+                - model: a100
+  placement:
+    akash:
+      pricing:
+        datagen:
+          denom: uakt
+          amount: 100000
+
+deployment:
+  datagen:
+    akash:
+      profile: datagen
+      count: 1

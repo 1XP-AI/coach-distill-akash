@@ -40,17 +40,34 @@ node datagen.bundle.mjs --langs all --vary-squads 3 --per-case 1 --retries 2 --c
 
 echo "── upload dataset → $DATA_REPO ──"
 python3 -m pip install -q "huggingface_hub>=0.27"
+# Upload must NOT crash the container: the ~1h datagen output is precious. On any
+# failure (perms/namespace/network) keep the container alive so the file can be
+# recovered via `provider shell` or re-uploaded — never crash-loop the datagen.
+set +e
 python3 - <<PY
 from huggingface_hub import HfApi
-import os
-api = HfApi(token=os.environ["HF_TOKEN"])
-api.create_repo("$DATA_REPO", repo_type="dataset", private=True, exist_ok=True)
-api.upload_file(path_or_fileobj="out/teacher-data.jsonl",
-                path_in_repo="teacher-data.jsonl",
-                repo_id="$DATA_REPO", repo_type="dataset")
-print("uploaded teacher-data.jsonl → $DATA_REPO")
+import os, sys
+try:
+    api = HfApi(token=os.environ["HF_TOKEN"])
+    who = api.whoami()
+    print("HF token account:", who.get("name"), "| orgs:",
+          [o.get("name") for o in who.get("orgs", [])])
+    api.create_repo("$DATA_REPO", repo_type="dataset", private=False, exist_ok=True)
+    api.upload_file(path_or_fileobj="out/teacher-data.jsonl",
+                    path_in_repo="teacher-data.jsonl",
+                    repo_id="$DATA_REPO", repo_type="dataset")
+    print("UPLOAD_OK → $DATA_REPO")
+except Exception as e:
+    print("UPLOAD_FAILED:", repr(e), file=sys.stderr)
+    sys.exit(3)
 PY
+UP=$?
+set -e
+if [ "$UP" != "0" ]; then
+  echo "── UPLOAD_FAILED (rc=$UP): data is safe at $PWD/out/teacher-data.jsonl."
+  echo "   Fix HF_TOKEN perms / DATA_REPO namespace, then re-upload via shell — no re-run needed."
+fi
 
-echo "── DATAGEN_DONE — sleeping so logs stay inspectable; close the lease to stop billing ──"
+echo "── DATAGEN_DONE (upload rc=$UP) — sleeping so logs stay inspectable; close the lease to stop billing ──"
 kill "$VLLM_PID" 2>/dev/null || true
 sleep infinity
