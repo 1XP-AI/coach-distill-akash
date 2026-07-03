@@ -1,0 +1,56 @@
+---
+version: "2.0"
+services:
+  train:
+    image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+    env:
+      - REPO_ROOT=/app/repo
+      - STUDENT_MODEL=Qwen/Qwen3.5-0.8B
+      - EPOCHS=3.3
+      - BATCH_SIZE=8
+      - MAX_SEQ_LEN=3328
+      - LORA_RANK=16
+      - DATA_REPO=jjangg96/coach-distill-data
+      - HUB_REPO=jjangg96/coach-qwen35-0.8b-lora
+      # add HF_TOKEN below before deploy:
+      # - HF_TOKEN=hf_xxx
+    command:
+      - bash
+      - -lc
+    args:
+      - >-
+        apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates &&
+        git clone --depth 1 https://github.com/1XP-AI/coach-distill-akash.git "$REPO_ROOT" &&
+        exec bash "$REPO_ROOT/entrypoint-train.sh"
+    expose:
+      - port: 8080
+        as: 80
+        to:
+          - global: true
+profiles:
+  compute:
+    train:
+      resources:
+        cpu:
+          units: 8
+        memory:
+          size: 32Gi
+        storage:
+          size: 60Gi
+        gpu:
+          units: 1
+          attributes:
+            vendor:
+              nvidia:
+                - model: a100
+  placement:
+    akash:
+      pricing:
+        train:
+          denom: uakt
+          amount: 100000
+deployment:
+  train:
+    akash:
+      profile: train
+      count: 1
