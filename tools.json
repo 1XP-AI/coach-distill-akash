@@ -1,0 +1,134 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "changeFormation",
+      "description": "Reassign field positions for one or more players. Use to change the team shape (e.g. 4-3-3 → 4-2-3-1). Each player is referenced by slotIndex (0–10). HARD CONSTRAINT — the server REJECTS the change otherwise: the resulting 11 must keep exactly 1 GK and AT LEAST ONE of EACH outfield position (DF, DMF, OMF, FW). A \"4-3-3\" must map the three midfielders as e.g. 1 DMF + 2 OMF — NEVER 0 DMF. Never leave DF, DMF, OMF, or FW empty.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "playerUpdates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slotIndex": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10
+                },
+                "newPosition": {
+                  "type": "string",
+                  "enum": [
+                    "GK",
+                    "DF",
+                    "DMF",
+                    "OMF",
+                    "FW"
+                  ]
+                }
+              },
+              "required": [
+                "slotIndex",
+                "newPosition"
+              ]
+            }
+          }
+        },
+        "required": [
+          "playerUpdates"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "adjustPlayerStats",
+      "description": "Zero-sum reallocation of ONE player's ability budget. The delta keys are EXACTLY pass, dribble, shoot, defense. The deltas MUST sum to 0 (e.g. +2 defense / -2 pass). HARD CONSTRAINT — the server rejects otherwise: every resulting attribute must stay within 1-10. Read the player's CURRENT values in the squad block first — NEVER lower a stat that is already 1, NEVER raise a stat already at 10, and keep the player's total within 10-29. To \"maximise attack\", move points OUT of a stat that still has room (>1), not out of one already at 1.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slotIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "delta": {
+            "type": "object",
+            "properties": {
+              "pass": {
+                "type": "integer"
+              },
+              "dribble": {
+                "type": "integer"
+              },
+              "shoot": {
+                "type": "integer"
+              },
+              "defense": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "required": [
+          "slotIndex",
+          "delta"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "swapPlayer",
+      "description": "Exchange the field positions of two players (attributes stay with each player).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slotIndexA": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "slotIndexB": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "slotIndexA",
+          "slotIndexB"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "renamePlayer",
+      "description": "Change a player's display name (1–10 characters, must stay unique in the squad).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slotIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "newName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "slotIndex",
+          "newName"
+        ]
+      }
+    }
+  }
+]

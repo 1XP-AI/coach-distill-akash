@@ -1,0 +1,60 @@
+---
+# Akash SDL — Phase A: Gemma 4 teacher (vLLM) + datagen on a rented A100.
+# Regenerates the teacher dataset on Akash (no Mac) and uploads it to a private
+# HF dataset repo for Phase B. STOCK vllm image + public-repo bootstrap: the
+# command clones THIS public repo (no GitHub token) and runs the standalone
+# datagen bundle. Paste into https://air.akash.network → Upload SDL; add the
+# HF_TOKEN env; fund in AKT.
+version: "2.0"
+
+services:
+  datagen:
+    image: vllm/vllm-openai:latest
+    env:
+      - REPO_ROOT=/app/repo
+      - TEACHER_MODEL=google/gemma-4-26B-A4B-it
+      - DATA_REPO=1xp/coach-distill-data # private HF dataset repo (auto-created)
+      # add this secret in the Console before deploy:
+      # - HF_TOKEN=hf_xxx   (write; uploads the dataset)
+    command:
+      - bash
+      - -lc
+    args:
+      - >-
+        apt-get update && apt-get install -y --no-install-recommends git curl ca-certificates &&
+        git clone --depth 1 https://github.com/1XP-AI/coach-distill-akash.git "$REPO_ROOT" &&
+        exec bash "$REPO_ROOT/entrypoint-datagen.sh"
+    expose:
+      - port: 8000
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    datagen:
+      resources:
+        cpu:
+          units: 8
+        memory:
+          size: 48Gi
+        storage:
+          size: 120Gi # Gemma 26B-A4B bf16 weights (~52GB) + HF cache
+        gpu:
+          units: 1
+          attributes:
+            vendor:
+              nvidia:
+                - model: a100 # 80GB — fits 26B-A4B bf16 + KV
+  placement:
+    akash:
+      pricing:
+        datagen:
+          denom: uakt
+          amount: 100000 # ceiling per block; Console suggests the live rate
+
+deployment:
+  datagen:
+    akash:
+      profile: datagen
+      count: 1
